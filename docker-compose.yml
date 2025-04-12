@@ -1,0 +1,55 @@
+
+services:
+  db-user:
+    build: 
+      context: ./MySQL
+      dockerfile: Dockerfile
+    container_name: mysql_db_user
+    restart: always
+    ports:
+      - 4700:3306
+    volumes:
+      - ./Config/mysql:/var/lib/mysql
+    hostname: apps_database
+    networks:
+      - fastapi_user 
+
+    healthcheck:
+        test: ["CMD","mysql", "-u", "userManagement", "-puserManagement"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+# --------------------------------------------------------------------
+  # - The adminer is a tool for managing content in databases.
+  adminer:
+    image: adminer
+    container_name: adminer_fastapi
+    restart: always
+    ports:
+      - 8005:8080
+    networks:
+      - fastapi_user
+
+# --------------------------------------------------------------------
+
+  fastapi:
+    build: 
+      context: ./backendUser
+      dockerfile: Dockerfile
+    container_name: fastapi
+    restart: always
+    ports:
+      - 8010:80
+    depends_on:
+       db-user: 
+         condition: service_healthy
+    networks:
+      - fastapi_user
+
+      
+
+
+networks:
+  fastapi_user:
+      driver: bridge
+      name: fastapi_user
